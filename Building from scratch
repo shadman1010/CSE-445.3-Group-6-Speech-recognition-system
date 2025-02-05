@@ -1,0 +1,50 @@
+pip install librosa numpy pandas torch torchaudio tensorflow keras soundfile
+
+import os
+import librosa
+import numpy as np
+import soundfile as sf
+from sklearn.model_selection import train_test_split
+
+def extract_features(file_path, max_pad_len=100):
+    audio, sample_rate = librosa.load(file_path, sr=16000)  # 16kHz sampling rate
+    mfccs = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40)  # t 40 MFCC features
+    
+    # Pading to make shit consistant
+    pad_width = max_pad_len - mfccs.shape[1]
+    if pad_width > 0:
+        mfccs = np.pad(mfccs, pad_width=((0, 0), (0, pad_width)), mode='constant')
+    else:
+        mfccs = mfccs[:, :max_pad_len]
+
+    return mfccs
+
+
+
+# DATDA PREPROSSING 
+data_dir = "speech_data/" #data path in my drive maybe im running out of space
+labels = ["hello", "world", "open", "close", "stop"]  # Sample vocabulary
+
+X = []  # Features
+y = []  # Labels
+
+for file in os.listdir(data_dir):
+    if file.endswith(".wav"):
+        filepath = os.path.join(data_dir, file)
+        mfcc = extract_features(filepath)
+        X.append(mfcc)
+        
+        # Extract label from filename (assuming filenames are "hello_1.wav", "world_2.wav", etc.)
+        label = file.split("_")[0]
+        y.append(labels.index(label))  # Convert label to index
+
+X = np.array(X)
+y = np.array(y)
+
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+print("Training Data Shape:", X_train.shape, "Labels:", y_train.shape)
+
+#training libs
+import tensorflow as tf
