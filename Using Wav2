@@ -1,0 +1,22 @@
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h")
+model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h")
+
+
+#just the trascription part made 2/6/25
+
+def transcribe_audio(                                    #dataset location in drive):
+    # Load and preprocess audio
+    speech, rate = librosa.load(file_path, sr=16000)
+    
+    # Token and extract features
+    input_values = processor(speech, sampling_rate=16000, return_tensors="pt").input_values
+
+    # Perform inference
+    with torch.no_grad():
+        logits = model(input_values).logits
+
+    # Decode the output
+    predicted_ids = torch.argmax(logits, dim=-1)
+    transcription = processor.batch_decode(predicted_ids)[0]
+
+    return transcription
