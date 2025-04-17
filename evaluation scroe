@@ -1,0 +1,36 @@
+#evaulation calculation
+
+if precision + recall == 0:
+    f1 = 0.0
+else:
+    f1 = 2 * precision * recall / (precision + recall)
+
+from jiwer import compute_measures
+
+# Normalize the inputs (optional but helpful)
+import re
+def normalize(text):
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+normalized_truth = normalize(ground_truth)
+normalized_pred = normalize(transcription)
+
+# Compute measures
+measures = compute_measures(normalized_truth, normalized_pred)
+correct = measures['hits']
+insertions = measures['insertions']
+deletions = measures['deletions']
+substitutions = measures['substitutions']
+
+# Calculate metrics safely
+precision = correct / (correct + substitutions + insertions) if (correct + substitutions + insertions) > 0 else 0
+recall = correct / (correct + substitutions + deletions) if (correct + substitutions + deletions) > 0 else 0
+f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+
+# Output
+print("\n📊 Evaluation Results (robust):")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1 Score: {f1:.2f}")
